@@ -115,10 +115,6 @@ button,input,textarea,select{font:inherit;color:inherit}
 .clearq{position:absolute;right:9px;border:0;background:transparent;color:var(--ink-3);cursor:pointer;
   padding:7px;border-radius:7px;line-height:1}
 .clearq:hover{background:var(--surface-2);color:var(--ink)}
-.hintrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:rgba(255,255,255,.45)}
-.hint{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
-  padding:3px 9px;border-radius:999px;cursor:pointer;color:rgba(255,255,255,.78);transition:.15s}
-.hint:hover{background:#fff;border-color:#fff;color:var(--header)}
 
 /* ── 카테고리 ─────────────────────────── */
 .cats{display:flex;gap:7px;flex-wrap:wrap;margin:26px 0 20px}
@@ -403,13 +399,6 @@ const BUCKET        = "wiki-files";
       <input id="q" type="search" autocomplete="off" placeholder="대충 검색해도 됩니다 — 초성, 오타, 영문자판 모두 인식">
       <button class="clearq" id="clearq" hidden aria-label="검색어 지우기">✕</button>
     </div>
-    <div class="hintrow">
-      <span>예시</span>
-      <button class="hint" data-ex="ㅋㅅㄹ">ㅋㅅㄹ</button>
-      <button class="hint" data-ex="카소라 방송">카소라 방송</button>
-      <button class="hint" data-ex="wjdtks">wjdtks</button>
-      <button class="hint" data-ex="상품코드">상품코드</button>
-    </div>
   </div>
 </div>
 
@@ -679,12 +668,6 @@ function renderList(){
         <div class="panel"><h4>최근 문서</h4><div class="mini">
           ${recent.length?recent.map(d=>`<button data-open="${esc(d.id)}"><span class="kk">${fmtDate(d.updatedAt).slice(5)||'—'}</span><span class="tt">${esc(d.title)}</span></button>`).join(''):'<span class="tag">아직 없습니다</span>'}
         </div></div>
-        <div class="panel"><h4>검색 요령</h4>
-          <p style="margin:0;font-size:13px;color:var(--ink-2);line-height:1.7">
-            초성(<code>ㅋㅅㄹ</code>), 오타(<code>카소라</code>), 한영 전환 실수(<code>zktyfk</code>), 줄임말·별칭이 모두 같은 결과로 이어집니다.
-            문서를 저장할 때 <b>검색어 자동 채우기</b>를 눌러두면 더 잘 걸립니다.
-          </p>
-        </div>
       </aside>
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render();});
@@ -1246,7 +1229,6 @@ qEl.addEventListener('input',()=>{
   tdeb=setTimeout(()=>{S.q=qEl.value;if(S.view!=='list'){S.view='list';S.cur=null;}render();},130);
 });
 document.getElementById('clearq').onclick=()=>{qEl.value='';S.q='';render();qEl.focus();};
-document.querySelectorAll('.hint').forEach(b=>b.onclick=()=>{qEl.value=b.dataset.ex;S.q=b.dataset.ex;S.view='list';S.cur=null;render();});
 document.getElementById('newBtn').onclick=()=>startCompose(null);
 document.getElementById('ioBtn').onclick=()=>{S.view='io';S.msg=null;window.scrollTo(0,0);render();};
 document.getElementById('navDocs').onclick=()=>{S.view='list';S.cur=null;S.curEv=null;window.scrollTo(0,0);render();};
