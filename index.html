@@ -296,27 +296,45 @@ code{font-family:var(--mono);font-size:.9em;background:var(--navy-tint);color:va
   padding:1px 5px;border-radius:4px}
 
 /* ── 캘린더 ───────────────────────────── */
-.calbar{display:flex;align-items:center;gap:9px;margin:26px 0 16px;flex-wrap:wrap}
-.calmonth{font-weight:800;font-size:23px;letter-spacing:-.032em;margin:0}
+.calbar{display:flex;align-items:center;gap:11px;margin:26px 0 18px;flex-wrap:wrap}
+.calnav{display:flex;align-items:center;gap:2px;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow-sm)}
+.navbtn{width:31px;height:31px;border:0;background:transparent;border-radius:50%;cursor:pointer;color:var(--ink-2);
+  font-size:17px;line-height:1;display:grid;place-items:center;transition:.14s}
+.navbtn:hover{background:var(--brand-tint);color:var(--brand)}
+.calmonth{font-weight:800;font-size:21px;letter-spacing:-.03em;margin:0 12px;min-width:104px;text-align:center;white-space:nowrap}
+.calmonth em{font-style:normal;font-family:var(--mono);font-weight:400;font-size:13px;color:var(--ink-3);margin-right:7px}
+.calct{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);letter-spacing:.02em}
 .calgrid{background:var(--surface);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.dow{display:grid;grid-template-columns:repeat(7,1fr);background:var(--navy)}
-.dow span{padding:10px 4px;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
-  color:rgba(255,255,255,.55)}
-.dow span:first-child{color:#E8A9A1}
-.dow span:last-child{color:#9CBCE6}
-.days{display:grid;grid-template-columns:repeat(7,1fr)}
-.day{border-right:1px solid var(--line);border-bottom:1px solid var(--line);min-height:104px;padding:8px 7px;
-  background:transparent;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px;overflow:hidden;transition:.13s}
-.day:nth-child(7n){border-right:0}
+.dow{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--line)}
+.dow span{padding:14px 4px 12px;text-align:center;font-size:11.5px;font-weight:700;letter-spacing:.05em;color:var(--ink-3)}
+.dow span:first-child{color:var(--clay)}
+.dow span:last-child{color:var(--brand)}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line)}
+.day{background:var(--surface);border:0;min-height:114px;padding:9px 8px 10px;text-align:left;cursor:pointer;
+  display:flex;flex-direction:column;gap:6px;overflow:hidden;transition:background .14s}
 .day:hover{background:var(--surface-2)}
-.day[aria-pressed="true"]{background:var(--navy-tint);box-shadow:inset 0 0 0 1.5px var(--navy-2)}
-.day.out{opacity:.32}
-.dnum{font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em}
-.day.today .dnum{color:#fff;background:var(--brand);border-radius:999px;padding:2px 7px;align-self:flex-start;font-weight:500}
-.evchip{font-size:11px;line-height:1.5;padding:3px 7px;border-radius:5px;white-space:nowrap;overflow:hidden;
-  text-overflow:ellipsis;font-weight:600;letter-spacing:-.01em}
-.more{font-size:10px;color:var(--ink-3);padding-left:4px;font-family:var(--mono)}
-@media (max-width:600px){.day{min-height:72px;padding:5px 4px}.evchip{font-size:9.5px;padding:2px 4px}}
+.day.out{background:var(--surface-2)}
+.day.out .dnum{opacity:.38}
+.day[aria-pressed="true"]{background:var(--brand-tint);box-shadow:inset 0 0 0 2px var(--brand)}
+.dnum{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink-2);letter-spacing:.01em;
+  align-self:flex-start;min-width:23px;height:23px;display:grid;place-items:center;border-radius:50%}
+.day.sun .dnum{color:var(--clay)}
+.day.sat .dnum{color:var(--brand)}
+.day.today .dnum{background:var(--brand);color:#fff;font-weight:600}
+.evs{display:flex;flex-direction:column;gap:3px;min-width:0}
+.evchip{display:block;font-size:11.5px;line-height:1.5;padding:3px 7px;border-radius:4px;
+  border-left:3px solid currentColor;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-weight:600;letter-spacing:-.012em}
+.evchip b{font-family:var(--mono);font-weight:500;font-size:10px;opacity:.72;margin-right:5px}
+.more{font-size:10.5px;color:var(--ink-3);padding-left:5px;font-family:var(--mono)}
+@media (max-width:640px){
+  .day{min-height:84px;padding:6px 4px 7px;gap:4px}
+  .dnum{font-size:11.5px;min-width:20px;height:20px}
+  .evchip{font-size:10px;padding:2px 5px;border-left-width:2px}
+  .evchip b{display:none}
+  .calmonth{font-size:18px;min-width:88px;margin:0 5px}
+  .dow span{padding:11px 2px 9px;font-size:10.5px}
+}
 .pf-amber{background:var(--brand-tint);color:var(--brand)}
 .pf-teal{background:var(--teal-tint);color:var(--teal)}
 .pf-plum{background:var(--plum-tint);color:var(--plum)}
@@ -324,17 +342,23 @@ code{font-family:var(--mono);font-size:.9em;background:var(--navy-tint);color:va
 .pf-blue{background:var(--navy-tint);color:var(--navy-2)}
 .pf-green{background:var(--sage-tint);color:var(--sage)}
 .pf-slate{background:var(--slate-tint);color:var(--slate)}
-.pfdot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block}
-.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--ink-3);align-items:center}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.dayp{margin-top:26px}
-.evrow{display:flex;gap:13px;align-items:center;width:100%;background:var(--surface);border:0;
-  border-radius:var(--r-sm);padding:14px 16px;cursor:pointer;text-align:left;margin-bottom:8px;
-  box-shadow:var(--shadow-sm);transition:.15s}
+.pfdot{width:8px;height:8px;border-radius:50%;flex:none;display:inline-block;background:currentColor}
+.erail{position:absolute;left:0;top:0;bottom:0;width:4px;background:currentColor}
+.legend{display:flex;gap:7px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.legend .lg{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:600;
+  padding:5px 12px;border-radius:999px;letter-spacing:-.01em}
+.dayp{margin-top:30px}
+.dayphead{display:flex;align-items:baseline;gap:11px;margin-bottom:15px;flex-wrap:wrap}
+.dayphead h3{margin:0;font-weight:800;font-size:19px;letter-spacing:-.028em}
+.dayphead .ct{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3);letter-spacing:.02em}
+.evrow{display:flex;gap:14px;align-items:center;width:100%;background:var(--surface);border:0;
+  border-radius:var(--r-sm);padding:16px 18px 16px 22px;cursor:pointer;text-align:left;margin-bottom:9px;
+  box-shadow:var(--shadow-sm);transition:.16s;position:relative;overflow:hidden}
 .evrow:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
-.evrow .tm{font-family:var(--mono);font-size:11.5px;color:var(--brand);flex:none;width:46px;font-weight:500}
-.evrow .ti{font-weight:700;font-size:14.5px;letter-spacing:-.015em}
+.evrow .tm{font-family:var(--mono);font-size:12px;color:var(--ink-2);flex:none;width:45px;font-weight:600}
+.evrow .ti{font-weight:700;font-size:15px;letter-spacing:-.018em}
 .evrow .rt{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);flex:none}
+@media (max-width:520px){.evrow{padding:14px 14px 14px 18px;gap:10px}.evrow .rt{display:none}}
 .srcdoc{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden;margin-top:16px}
 .srchead{display:flex;align-items:center;gap:9px;padding:12px 16px;background:var(--surface-2);
   border-bottom:1px solid var(--line);font-size:13.5px}
@@ -1041,33 +1065,41 @@ function renderCal(){
   for(let d=1;d<=last;d++)cells.push({d,out:false,date:dstr(y,m,d)});
   while(cells.length%7){const n=cells.length-start-last+1;cells.push({d:n,out:true,date:dstr(m===11?y+1:y,m===11?0:m+1,n)});}
   const usedPf=[...new Set(S.events.map(e=>e.platform).filter(Boolean))];
+  const mk=y+'-'+pad(m+1);
+  const mcount=S.events.filter(e=>String(e.date||'').startsWith(mk)).length;
   app.innerHTML=`
     <div class="calbar">
-      <h2 class="calmonth">${y}년 ${m+1}월</h2>
-      <button class="btn sm" id="prevM" aria-label="이전 달">◀</button>
-      <button class="btn sm" id="nextM" aria-label="다음 달">▶</button>
+      <div class="calnav">
+        <button class="navbtn" id="prevM" aria-label="이전 달">‹</button>
+        <h2 class="calmonth"><em>${y}</em>${m+1}월</h2>
+        <button class="navbtn" id="nextM" aria-label="다음 달">›</button>
+      </div>
       <button class="btn sm" id="todayB">오늘</button>
+      <span class="calct">${mcount?'일정 '+mcount+'건':'일정 없음'}</span>
       <span style="flex:1"></span>
       <button class="btn primary" id="addEv">+ 일정 추가</button>
     </div>
     <div class="calgrid">
       <div class="dow">${DOW.map(d=>`<span>${d}</span>`).join('')}</div>
-      <div class="days">${cells.map(c=>{
+      <div class="days">${cells.map((c,i)=>{
         const evs=eventsOn(c.date),show=evs.slice(0,3);
-        return `<button class="day ${c.out?'out':''} ${c.date===today?'today':''}" data-day="${c.date}" aria-pressed="${sel===c.date}">
+        const wd=i%7===0?'sun':(i%7===6?'sat':'');
+        return `<button class="day ${c.out?'out':''} ${c.date===today?'today':''} ${wd}" data-day="${c.date}" aria-pressed="${sel===c.date}">
           <span class="dnum">${c.d}</span>
-          ${show.map(e=>`<span class="evchip ${pf(e.platform).cls}">${esc((e.time?e.time+' ':'')+e.title)}</span>`).join('')}
+          <span class="evs">${show.map(e=>`<span class="evchip ${pf(e.platform).cls}">${e.time?'<b>'+esc(e.time)+'</b>':''}${esc(e.title)}</span>`).join('')}</span>
           ${evs.length>show.length?`<span class="more">+${evs.length-show.length}</span>`:''}
         </button>`;}).join('')}</div>
     </div>
-    ${usedPf.length?`<div class="legend">${usedPf.map(k=>`<span><i class="pfdot ${pf(k).cls}" style="background:currentColor"></i>${esc(k)}</span>`).join('')}</div>`:''}
+    ${usedPf.length?`<div class="legend">${usedPf.map(k=>`<span class="lg ${pf(k).cls}"><i class="pfdot"></i>${esc(k)}</span>`).join('')}</div>`:''}
     <div class="dayp">
-      <p class="sectlabel">${sel?fmtDay(sel)+' 일정':'날짜를 누르면 그날 일정이 보입니다'}</p>
+      ${sel?`<div class="dayphead"><h3>${esc(fmtDay(sel))}</h3><span class="ct">${eventsOn(sel).length}건</span></div>`
+           :`<p class="sectlabel">날짜를 누르면 그날 일정이 보입니다</p>`}
       ${sel?(eventsOn(sel).length?eventsOn(sel).map(e=>{
         const st=evStats(e);
         return `<button class="evrow" data-ev="${esc(e.id)}">
+          <span class="erail ${pf(e.platform).cls}"></span>
           <span class="tm">${esc(e.time||'—')}</span>
-          <span><span class="ti">${esc(e.title)}</span><span class="pill ${pf(e.platform).cls}" style="margin-left:6px">${esc(e.platform||'공통')}</span></span>
+          <span><span class="ti">${esc(e.title)}</span><span class="pill ${pf(e.platform).cls}" style="margin-left:7px">${esc(e.platform||'공통')}</span></span>
           <span class="rt">${st.total?'할 일 '+st.done+'/'+st.total:'할 일 없음'}</span></button>`;}).join('')
         :`<div class="empty"><strong>이 날은 일정이 없습니다</strong>위 <b>+ 일정 추가</b>로 등록하세요.</div>`):''}
     </div>`;
