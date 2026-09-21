@@ -225,6 +225,8 @@ ul.bul li::before{content:"";position:absolute;left:1px;top:11px;width:4px;heigh
 .fields dd{padding:12px 0;margin:0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
 .fields dt:nth-last-of-type(1),.fields dd:nth-last-of-type(1){border-bottom:0}
 .ptext{margin:0;white-space:pre-wrap;color:var(--ink-2);font-size:15px;line-height:1.75;max-width:66ch}
+.block a{color:var(--brand);text-decoration:underline;text-underline-offset:2px;word-break:break-all}
+.block a:hover{color:var(--brand-deep)}
 .backrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 
 /* ── 체크리스트 ───────────────────────── */
@@ -549,6 +551,7 @@ let sb=null;
 
 const app=document.getElementById('app');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lnk=s=>esc(s).replace(/https?:\/\/[^\s<>"')\]]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
 function pad(n){return String(n).padStart(2,'0');}
 function fmtDate(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';return d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate());}
 function uid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():'id'+Date.now()+Math.random().toString(36).slice(2);}
@@ -705,11 +708,11 @@ function blocksHTML(d,interactive){
         return `<li><button class="chkrow" data-chk="${bi}_${ii}" aria-pressed="${on}"><span class="chkbox">✓</span><span class="chktext">${esc(it)}</span></button></li>`;
       }).join('')}</ul></section>`;
     }
-    if(b.kind==='steps')return `<section class="block">${h}<ol class="steps">${(b.items||[]).map(i=>`<li>${esc(i)}</li>`).join('')}</ol></section>`;
-    if(b.kind==='warn')return `<section class="block warn">${h}<div class="warnbox"><ul>${(b.items||[]).map(i=>`<li>${esc(i)}</li>`).join('')}</ul></div></section>`;
-    if(b.kind==='fields')return `<section class="block">${h}<dl class="fields">${(b.pairs||[]).map(p=>`<dt>${esc(p.k)}</dt><dd>${esc(p.v)}</dd>`).join('')}</dl></section>`;
-    if(b.kind==='list')return `<section class="block">${h}<ul class="bul">${(b.items||[]).map(i=>`<li>${esc(i)}</li>`).join('')}</ul></section>`;
-    return `<section class="block">${h}<p class="ptext">${esc(b.text||'')}</p></section>`;
+    if(b.kind==='steps')return `<section class="block">${h}<ol class="steps">${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ol></section>`;
+    if(b.kind==='warn')return `<section class="block warn">${h}<div class="warnbox"><ul>${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ul></div></section>`;
+    if(b.kind==='fields')return `<section class="block">${h}<dl class="fields">${(b.pairs||[]).map(p=>`<dt>${esc(p.k)}</dt><dd>${lnk(p.v)}</dd>`).join('')}</dl></section>`;
+    if(b.kind==='list')return `<section class="block">${h}<ul class="bul">${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ul></section>`;
+    return `<section class="block">${h}<p class="ptext">${lnk(b.text||'')}</p></section>`;
   }).join('');
 }
 function filesHTML(files){
