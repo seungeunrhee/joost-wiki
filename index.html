@@ -678,24 +678,14 @@ function renderList(){
   if(Q)rows=S.docs.map(d=>({d,...scoreDoc(d,Q)})).filter(r=>r.score>18).sort((a,b)=>b.score-a.score);
   else rows=S.docs.slice().sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).map(d=>({d,score:0,why:''}));
   if(S.cat!=='all')rows=rows.filter(r=>r.d.type===S.cat);
-  const recent=S.docs.slice().sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))).slice(0,7);
   app.innerHTML=`
     ${S.msg?`<div class="notice ${esc(S.msg.k||'')}">${esc(S.msg.t)}</div>`:''}
     ${catBar()}
-    <div class="cols">
-      <div>
-        <p class="sectlabel">${Q?`"${esc(S.q)}" 검색 결과 ${rows.length}건`:'최근 업데이트순'}</p>
-        <div class="list">
-          ${!S.loaded?'<div class="skel"></div><div class="skel"></div><div class="skel"></div>':''}
-          ${S.loaded&&!rows.length?emptyHTML(Q):''}
-          ${rows.map(cardHTML).join('')}
-        </div>
-      </div>
-      <aside class="side">
-        <div class="panel"><h4>최근 문서</h4><div class="mini">
-          ${recent.length?recent.map(d=>`<button data-open="${esc(d.id)}"><span class="kk">${fmtDate(d.updatedAt).slice(5)||'—'}</span><span class="tt">${esc(d.title)}</span></button>`).join(''):'<span class="tag">아직 없습니다</span>'}
-        </div></div>
-      </aside>
+    <p class="sectlabel">${Q?`"${esc(S.q)}" 검색 결과 ${rows.length}건`:'최근 업데이트순'}</p>
+    <div class="list">
+      ${!S.loaded?'<div class="skel"></div><div class="skel"></div><div class="skel"></div>':''}
+      ${S.loaded&&!rows.length?emptyHTML(Q):''}
+      ${rows.map(cardHTML).join('')}
     </div>`;
   app.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render();});
   app.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDoc(b.dataset.open));
