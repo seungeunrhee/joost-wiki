@@ -20,7 +20,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r rpa/requirements.txt
           pip install pyinstaller==6.10.0
-      - name: build
+      - name: build copy tool
+        run: >
+          pyinstaller --noconfirm --onefile --windowed
+          --name JustGodoCopy
+          --collect-all playwright
+          --collect-all openpyxl
+          rpa/godo_copy.py
+      - name: build register tool
         run: >
           pyinstaller --noconfirm --onefile --windowed
           --name JustGodoRPA
@@ -29,6 +36,8 @@ jobs:
           rpa/godo_rpa.py
       - uses: actions/upload-artifact@v4
         with:
-          name: JustGodoRPA-windows
-          path: dist/JustGodoRPA.exe
+          name: JustGodo-windows
+          path: |
+            dist/JustGodoCopy.exe
+            dist/JustGodoRPA.exe
           retention-days: 30
