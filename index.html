@@ -133,28 +133,26 @@ button,input,textarea,select{font:inherit;color:inherit}
 .sectlabel::after{content:"";flex:1;height:1px;background:var(--line)}
 
 /* ── 목록 카드 ────────────────────────── */
-.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(286px,1fr));gap:13px;align-items:stretch;margin-bottom:30px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
+  box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:26px}
 .list:last-child{margin-bottom:0}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-sm);
-  padding:17px 18px 14px;cursor:pointer;text-align:left;width:100%;height:100%;
-  display:flex;flex-direction:column;transition:transform .16s,box-shadow .16s,border-color .16s;position:relative;overflow:hidden}
-.card::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--line-2);transition:.16s}
+.card{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:0;
+  border-bottom:1px solid var(--line);border-radius:0;padding:0 16px 0 0;cursor:pointer;text-align:left;
+  transition:background .13s;min-height:46px}
+.card:last-child{border-bottom:0}
+.card::before{content:"";flex:none;width:3px;align-self:stretch;background:var(--line-2);transition:.13s}
 .card.t-sop::before{background:var(--navy-2)}
 .card.t-channel::before{background:var(--teal)}
 .card.t-faq::before{background:var(--clay)}
 .card.t-schedule::before{background:var(--sage)}
-.card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--line-2)}
-.card:active{transform:translateY(0)}
-@media (max-width:520px){.list{grid-template-columns:1fr;gap:11px}.card{padding:15px 16px 13px}}
-.card h3{margin:0 0 6px;font-weight:700;font-size:15.5px;line-height:1.4;letter-spacing:-.022em;color:var(--ink);
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card p{margin:0;color:var(--ink-2);font-size:13px;line-height:1.6;flex:1;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cardfoot{display:flex;align-items:center;gap:7px;margin-top:13px;padding-top:11px;border-top:1px solid var(--line);min-height:15px}
-.cardfoot .tag{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
-.cdate{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);flex:none;letter-spacing:.02em}
+.card:hover{background:var(--surface-2)}
+.ctitle{flex:1;min-width:0;font-weight:650;font-size:14.5px;letter-spacing:-.022em;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:13px 0}
+.cmeta{display:flex;align-items:center;gap:7px;flex:none}
+.cdate{font-family:var(--mono);font-size:10px;color:var(--ink-3);flex:none;letter-spacing:.02em;width:36px;text-align:right}
 .sectlabel .sn{font-family:var(--mono);font-size:10px;color:var(--ink-3);opacity:.8}
 .list+.sectlabel{margin-top:4px}
+@media (max-width:560px){.ctitle{font-size:14px}.cdate{display:none}.card{padding-right:12px}}
 .cardmeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .pill{font-size:11px;font-weight:600;letter-spacing:-.01em;padding:3px 9px;border-radius:6px;
   background:var(--slate-tint);color:var(--slate)}
@@ -697,11 +695,11 @@ function renderList(){
   app.querySelectorAll('[data-cat]').forEach(b=>b.onclick=()=>{S.cat=b.dataset.cat;render();});
   app.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDoc(b.dataset.open));
 }
-function grid(rows){return `<div class="list">${rows.map(cardHTML).join('')}</div>`;}
+function grid(rows,showType){return `<div class="list">${rows.map(r=>cardHTML(r,showType)).join('')}</div>`;}
 function listBody(rows,Q){
   if(!S.loaded)return '<div class="list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
   if(!rows.length)return `<p class="sectlabel">${Q?`"${esc(S.q)}" 검색 결과 0건`:'문서'}</p>`+emptyHTML(Q);
-  if(Q)return `<p class="sectlabel">"${esc(S.q)}" 검색 결과 <span class="sn">${rows.length}</span></p>`+grid(rows);
+  if(Q)return `<p class="sectlabel">"${esc(S.q)}" 검색 결과 <span class="sn">${rows.length}</span></p>`+grid(rows,true);
   if(S.cat!=='all')return `<p class="sectlabel">${esc((TYPES[S.cat]||{ko:'문서'}).ko)} <span class="sn">${rows.length}</span></p>`+grid(rows);
   let out='';
   Object.keys(TYPES).forEach(k=>{
@@ -717,22 +715,17 @@ function emptyHTML(Q){
   if(Q)return `<div class="empty"><strong>찾는 문서가 없습니다</strong>다른 말로 다시 검색해 보세요.</div>`;
   return `<div class="empty"><strong>아직 문서가 없습니다</strong><b>+ 새 문서</b>로 직접 쓰거나, <b>가져오기</b>로 정리된 문서를 붙여넣으세요.</div>`;
 }
-function cardHTML(r){
+function cardHTML(r,showType){
   const d=r.d,t=TYPES[d.type]||{ko:'기타'},cs=checkStats(d);
-  return `<button class="card t-${esc(d.type||'')}" data-open="${esc(d.id)}">
-    <div class="cardmeta">
-      <span class="pill ${esc(d.type||'')}">${esc(t.ko)}</span>
+  return `<button class="card t-${esc(d.type||'')}" data-open="${esc(d.id)}" title="${esc(d.summary||d.title)}">
+    <span class="ctitle">${esc(d.title)}</span>
+    <span class="cmeta">
+      ${r.why?`<span class="pill why">${esc(r.why)}</span>`:''}
+      ${showType?`<span class="pill ${esc(d.type||'')}">${esc(t.ko)}</span>`:''}
       ${cs?`<span class="pill prog">${cs.done}/${cs.total}</span>`:''}
       ${d.sample?'<span class="pill sample">예시</span>':''}
-      ${(d.files||[]).length?`<span class="pill">첨부 ${d.files.length}</span>`:''}
-      ${r.why?`<span class="pill why">${esc(r.why)}</span>`:''}
-    </div>
-    <h3>${esc(d.title)}</h3>
-    <p>${esc(d.summary||'')}</p>
-    <div class="cardfoot">
-      ${(d.tags||[]).slice(0,2).map(x=>`<span class="tag">${esc(x)}</span>`).join('')}
       <span class="cdate">${esc(fmtDate(d.updatedAt).slice(5)||'—')}</span>
-    </div>
+    </span>
   </button>`;
 }
 
