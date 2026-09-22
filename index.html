@@ -227,13 +227,22 @@ ul.bul li::before{content:"";position:absolute;left:1px;top:11px;width:4px;heigh
 .ptext{margin:0;white-space:pre-wrap;color:var(--ink-2);font-size:15px;line-height:1.75;max-width:66ch}
 .block a{color:var(--brand);text-decoration:underline;text-underline-offset:2px;word-break:break-all}
 .block a:hover{color:var(--brand-deep)}
+.gochip{display:inline-flex;align-items:center;gap:4px;flex:none;text-decoration:none!important;
+  font-size:11.5px;font-weight:600;line-height:1;padding:6px 10px;border-radius:999px;white-space:nowrap;
+  background:var(--brand-tint);color:var(--brand)!important;border:1px solid transparent;transition:.14s}
+.gochip:hover{background:var(--brand);color:#fff!important}
+.gochip::after{content:"\2197";font-size:10px;opacity:.8}
+.gorow{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 12px 50px;margin-top:-6px}
 .backrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 
 /* ── 체크리스트 ───────────────────────── */
 .chklist{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
 .chklist li{border-bottom:1px solid var(--line)}
-.chkrow{display:flex;gap:13px;align-items:flex-start;padding:12px 6px;width:100%;background:transparent;
-  border:0;text-align:left;cursor:pointer;font-size:14.5px;line-height:1.65;border-radius:7px;transition:.13s}
+.chkrow{display:flex;gap:11px;align-items:flex-start;padding:13px 6px;width:100%;background:transparent;
+  border:0;text-align:left;cursor:pointer;font-size:15px;line-height:1.62;border-radius:8px;transition:.13s;color:var(--ink)}
+.chknum{flex:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-top:5px;letter-spacing:.03em}
+.chkrow[aria-pressed="true"] .chknum{color:var(--line-2)}
+.chktext{flex:1}
 .chkrow:hover{background:var(--surface-2)}
 .chkbox{flex:none;width:19px;height:19px;border:1.5px solid var(--line-2);border-radius:6px;margin-top:2px;
   display:grid;place-items:center;font-size:11px;color:transparent;transition:.15s}
@@ -551,7 +560,22 @@ let sb=null;
 
 const app=document.getElementById('app');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const lnk=s=>esc(s).replace(/https?:\/\/[^\s<>"')\]]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+const bare=s=>esc(s).replace(/https?:\/\/[^\s<>"')\]]+/g,u=>`<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+const MDL=/\[([^\]\n]{1,60})\]\((https?:\/\/[^\s)]+)\)/g;
+function lnk(v){
+  const src=String(v==null?'':v);MDL.lastIndex=0;
+  let out='',last=0,m;
+  while((m=MDL.exec(src))){out+=bare(src.slice(last,m.index));
+    out+=`<a href="${esc(m[2])}" target="_blank" rel="noopener">${esc(m[1])}</a>`;last=MDL.lastIndex;}
+  return out+bare(src.slice(last));
+}
+function stepParts(v){
+  const chips=[];
+  let t=String(v==null?'':v).replace(MDL,(m,l,u)=>{chips.push({l,u});return ' ';});
+  t=t.replace(/https?:\/\/[^\s<>"')\]]+/g,u=>{chips.push({l:'\uc5f4\uae30',u});return ' ';});
+  return {t:t.replace(/\s{2,}/g,' ').trim(),chips};
+}
+const chipsHTML=c=>c.length?`<span class="gorow">${c.map(x=>`<a class="gochip" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.l)}</a>`).join('')}</span>`:'';
 function pad(n){return String(n).padStart(2,'0');}
 function fmtDate(iso){if(!iso)return '';const d=new Date(iso);if(isNaN(d))return '';return d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate());}
 function uid(){return (crypto&&crypto.randomUUID)?crypto.randomUUID():'id'+Date.now()+Math.random().toString(36).slice(2);}
@@ -574,7 +598,7 @@ function periodLabel(cycle){
   if(cycle==='quarter')return (Math.floor(d.getMonth()/3)+1)+'분기';
   return (d.getMonth()+1)+'월';
 }
-function isChecklist(d){return d&&d.type==='schedule';}
+function isChecklist(d){return !!(d&&(d.blocks||[]).some(b=>b.kind==='steps'&&(b.items||[]).length));}
 function checkState(d){
   const st=S.checks[d.id],p=periodKey(d.cycle||'month');
   if(!st||st.period!==p)return {period:p,items:{}};
@@ -584,7 +608,7 @@ function checkStats(d){
   if(!isChecklist(d))return null;
   const st=checkState(d);let total=0,done=0;
   (d.blocks||[]).forEach((b,bi)=>{
-    if(b.kind!=='steps'&&b.kind!=='list')return;
+    if(b.kind!=='steps')return;
     (b.items||[]).forEach((_,ii)=>{total++;if(st.items[bi+'_'+ii])done++;});
   });
   return total?{total,done,st}:null;
@@ -702,13 +726,12 @@ function blocksHTML(d,interactive){
   const chk=interactive&&isChecklist(d)?checkState(d):null;
   return (d.blocks||[]).map((b,bi)=>{
     const h=b.heading?`<h2>${esc(b.heading)}</h2>`:'';
-    if(chk&&(b.kind==='steps'||b.kind==='list')){
+    if(b.kind==='steps'){
       return `<section class="block">${h}<ul class="chklist">${(b.items||[]).map((it,ii)=>{
-        const on=!!chk.items[bi+'_'+ii];
-        return `<li><button class="chkrow" data-chk="${bi}_${ii}" aria-pressed="${on}"><span class="chkbox">✓</span><span class="chktext">${esc(it)}</span></button></li>`;
+        const on=chk?!!chk.items[bi+'_'+ii]:false,p=stepParts(it);
+        return `<li><button class="chkrow"${chk?` data-chk="${bi}_${ii}"`:''} aria-pressed="${on}"><span class="chkbox">✓</span><span class="chknum">${pad(ii+1)}</span><span class="chktext">${esc(p.t)}</span></button>${chipsHTML(p.chips)}</li>`;
       }).join('')}</ul></section>`;
     }
-    if(b.kind==='steps')return `<section class="block">${h}<ol class="steps">${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ol></section>`;
     if(b.kind==='warn')return `<section class="block warn">${h}<div class="warnbox"><ul>${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ul></div></section>`;
     if(b.kind==='fields')return `<section class="block">${h}<dl class="fields">${(b.pairs||[]).map(p=>`<dt>${esc(p.k)}</dt><dd>${lnk(p.v)}</dd>`).join('')}</dl></section>`;
     if(b.kind==='list')return `<section class="block">${h}<ul class="bul">${(b.items||[]).map(i=>`<li>${lnk(i)}</li>`).join('')}</ul></section>`;
@@ -743,7 +766,7 @@ function renderDoc(){
         <span class="pill prog">${periodLabel(d.cycle||'month')} ${cs.done}/${cs.total}</span>
         <span class="progbar"><i style="width:${Math.round(cs.done/cs.total*100)}%"></i></span>
         ${cs.done?'<button class="btn sm" id="resetChk">체크 초기화</button>':''}
-      </div><p class="bhelp" style="margin-top:-4px">${esc(CYCLES[d.cycle||'month'])} 기준으로 자동 초기화됩니다. 체크는 모두가 함께 봅니다.</p>`:''}
+      </div><p class="bhelp" style="margin-top:-4px">체크는 팀 전체가 함께 봅니다 · ${esc(CYCLES[d.cycle||'month'])} 기준 자동 초기화</p>`:''}
       ${blocksHTML(d,true)}
       ${filesHTML(d.files)}
       ${(d.tags||[]).length?`<div class="tags" style="margin-top:20px">${d.tags.map(x=>`<span class="tag">${esc(x)}</span>`).join('')}</div>`:''}
@@ -816,7 +839,7 @@ function renderCompose(){
     <div class="backrow"><button class="btn" id="cancel">← 취소</button></div>
     <div class="composer">
       <h2>${S.editing?'문서 수정':'새 문서'}</h2>
-      <p class="sub">블록 단위로 씁니다. 엑셀·워드 파일이 있으면 <b>파일 내용 불러오기</b>로 텍스트만 끌어와 다듬으셔도 됩니다.</p>
+      <p class="sub"><b>절차</b> 블록은 체크리스트로 만들어집니다. 각 줄 끝에 <code>[판매자센터](https://...)</code> 처럼 적으면 바로가기 버튼이 붙습니다.</p>
       <div id="msg">${S.msg?`<div class="notice ${esc(S.msg.k||'')}">${esc(S.msg.t)}</div>`:''}</div>
       <div id="editor">${editorHTML(d)}</div>
     </div>`;
@@ -859,7 +882,7 @@ function editorHTML(d){
     </div>`;
 }
 function blockEditHTML(b,i){
-  const help={steps:'한 줄에 한 단계씩',list:'한 줄에 하나씩',warn:'한 줄에 하나씩',fields:'한 줄에 “항목: 값”',text:'자유롭게'};
+  const help={steps:'한 줄에 한 단계씩 · 링크는 [이름](주소) 형식으로 넣으면 버튼이 됩니다',list:'한 줄에 하나씩',warn:'한 줄에 하나씩',fields:'한 줄에 “항목: 값”',text:'자유롭게'};
   return `<div class="bedit" data-i="${i}">
     <div class="brow">
       <select class="bkind">${Object.keys(KINDS).map(k=>`<option value="${k}" ${b.kind===k?'selected':''}>${KINDS[k]}</option>`).join('')}</select>
