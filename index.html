@@ -247,6 +247,31 @@ ul.bul li::before{content:"";position:absolute;left:1px;top:11px;width:4px;heigh
 .gorow{display:flex;gap:6px;flex-wrap:wrap;padding:0 4px 12px 50px;margin-top:-6px}
 .backrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 
+/* ── 완료 기록 ────────────────────────── */
+.donehead{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.donetitle{margin:0;font-size:24px;font-weight:800;letter-spacing:-.03em}
+.donesub{margin:6px 0 0;font-size:13.5px;color:var(--ink-2)}
+.donehead .btn{margin-left:auto}
+.donefilt{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.donefilt select{padding:7px 11px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);
+  font-size:12.5px;max-width:200px;cursor:pointer}
+.donecount{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.dtwrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-sm);overflow-x:auto}
+.dtable{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
+.dtable th{text-align:left;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-3);padding:11px 14px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+.dtable td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+.dtable tr:last-child td{border-bottom:0}
+.dtable tbody tr:hover{background:var(--surface-2)}
+.dwhen{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.ddoc button{background:none;border:0;padding:0;cursor:pointer;color:var(--brand);font-weight:600;
+  text-align:left;font-size:13px;line-height:1.5}
+.ddoc button:hover{text-decoration:underline}
+.ditem{line-height:1.6;color:var(--ink)}
+.dhead{display:block;font-size:10.5px;color:var(--ink-3);letter-spacing:.04em;margin-bottom:2px}
+.dby{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+@media (max-width:560px){.donehead .btn{margin-left:0}.donecount{margin-left:0}}
+
 /* ── 체크리스트 ───────────────────────── */
 .chklist{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
 .chklist li{border-bottom:1px solid var(--line)}
@@ -411,7 +436,7 @@ const BUCKET        = "wiki-files";
         <span class="wmsub">커머스 HUB</span>
       </button>
       <span class="brandsub" id="count">—</span>
-      <nav class="nav"><button id="navDocs" aria-pressed="true">문서</button><button id="navCal" aria-pressed="false">캘린더</button></nav>
+      <nav class="nav"><button id="navDocs" aria-pressed="true">문서</button><button id="navCal" aria-pressed="false">캘린더</button><button id="navDone" aria-pressed="false">완료 기록</button></nav>
       <span class="spacer"></span>
       <button class="whoami" id="whoami">이름 설정</button>
       <button class="btn" id="ioBtn">가져오기 / 내보내기</button>
@@ -564,7 +589,7 @@ const PLATFORMS=[
 ];
 function pf(key){return PLATFORMS.find(p=>p.key===key)||{key:key||'공통',label:key||'공통',cls:'pf-slate'};}
 
-const S={docs:[],checks:{},events:[],q:'',cat:'all',view:'list',cur:null,loaded:false,
+const S={docs:[],checks:{},events:[],q:'',cat:'all',view:'list',cur:null,loaded:false,dRange:'month',dDoc:'all',dBy:'all',
   draft:null,editing:null,pendDel:null,msg:null,me:'',
   cal:{y:new Date().getFullYear(),m:new Date().getMonth()},selDate:null,
   curEv:null,evDraft:null,evEditing:null,evPendDel:null,io:{text:'',res:''}};
@@ -611,10 +636,17 @@ function periodLabel(cycle){
   return (d.getMonth()+1)+'월';
 }
 function isChecklist(d){return !!(d&&(d.blocks||[]).some(b=>b.kind==='steps'&&(b.items||[]).length));}
+function allChecks(d){
+  const st=S.checks[d.id];if(!st)return {};
+  const it=st.items||{};
+  if(it&&it.v===2)return it.p||{};
+  const p=st.period||periodKey(d.cycle||'month'),conv={};
+  Object.keys(it).forEach(k=>{conv[k]=(it[k]&&typeof it[k]==='object')?it[k]:{by:'',at:''};});
+  return {[p]:conv};
+}
 function checkState(d){
-  const st=S.checks[d.id],p=periodKey(d.cycle||'month');
-  if(!st||st.period!==p)return {period:p,items:{}};
-  return {period:p,items:st.items||{}};
+  const p=periodKey(d.cycle||'month');
+  return {period:p,items:allChecks(d)[p]||{}};
 }
 function checkStats(d){
   if(!isChecklist(d))return null;
@@ -668,8 +700,12 @@ function render(){
   document.getElementById('count').textContent=S.loaded?S.docs.length+' DOCS':'LOADING';
   document.getElementById('clearq').hidden=!S.q;
   document.getElementById('whoami').textContent=S.me?S.me:'이름 설정';
-  document.getElementById('navDocs').setAttribute('aria-pressed',String(!inCal));
+  const inDone=S.view==='done';
+  document.getElementById('navDocs').setAttribute('aria-pressed',String(!inCal&&!inDone));
   document.getElementById('navCal').setAttribute('aria-pressed',String(inCal));
+  document.getElementById('navDone').setAttribute('aria-pressed',String(inDone));
+  if(inDone){document.getElementById('newBtn').hidden=true;document.getElementById('ioBtn').hidden=true;}
+  if(S.view==='done')return renderDone();
   if(S.view==='doc'&&S.cur)return renderDoc();
   if(S.view==='compose')return renderCompose();
   if(S.view==='io')return renderIO();
@@ -802,16 +838,105 @@ function renderDoc(){
     S.view='list';S.cur=null;await loadAll();
   };
 }
+async function saveChecks(d,p,all){
+  const items={v:2,p:all};
+  S.checks[d.id]={period:p,items};render();
+  await sb.from('checks').upsert({id:d.id,period:p,items,updated_at:new Date().toISOString()});
+}
 async function toggleCheck(d,key){
-  const st=checkState(d),items=Object.assign({},st.items);
-  if(items[key])delete items[key];else items[key]=true;
-  S.checks[d.id]={period:st.period,items};render();
-  await sb.from('checks').upsert({id:d.id,period:st.period,items,updated_at:new Date().toISOString()});
+  const p=periodKey(d.cycle||'month'),all=allChecks(d),cur=Object.assign({},all[p]||{});
+  if(cur[key])delete cur[key];else cur[key]={by:S.me||'',at:new Date().toISOString()};
+  await saveChecks(d,p,Object.assign({},all,{[p]:cur}));
 }
 async function resetChecks(d){
-  const p=periodKey(d.cycle||'month');
-  S.checks[d.id]={period:p,items:{}};render();
-  await sb.from('checks').upsert({id:d.id,period:p,items:{},updated_at:new Date().toISOString()});
+  const p=periodKey(d.cycle||'month'),all=Object.assign({},allChecks(d));
+  delete all[p];
+  await saveChecks(d,p,all);
+}
+function doneRows(){
+  const out=[];
+  S.docs.forEach(d=>{
+    const all=allChecks(d);
+    Object.keys(all).forEach(per=>{
+      const it=all[per]||{};
+      Object.keys(it).forEach(k=>{
+        const [bi,ii]=k.split('_').map(Number);
+        const b=(d.blocks||[])[bi];if(!b)return;
+        const text=(b.items||[])[ii];if(text==null)return;
+        const v=it[k]||{};
+        out.push({at:v.at||'',by:v.by||'',doc:d.title,docId:d.id,type:(TYPES[d.type]||{ko:'기타'}).ko,
+          heading:b.heading||'',item:stepParts(text).t,period:per});
+      });
+    });
+  });
+  out.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
+  return out;
+}
+function fmtWhen(iso){
+  if(!iso)return '—';
+  const t=new Date(iso);if(isNaN(t))return '—';
+  return t.getFullYear()+'.'+pad(t.getMonth()+1)+'.'+pad(t.getDate())+' '+pad(t.getHours())+':'+pad(t.getMinutes());
+}
+function renderDone(){
+  const all=doneRows();
+  const now=new Date(),mk=now.getFullYear()+'-'+pad(now.getMonth()+1);
+  let rows=all.slice();
+  if(S.dRange==='month')rows=rows.filter(r=>String(r.at).slice(0,7)===mk);
+  else if(S.dRange==='7d'){const lim=Date.now()-7*864e5;rows=rows.filter(r=>r.at&&new Date(r.at).getTime()>=lim);}
+  if(S.dDoc&&S.dDoc!=='all')rows=rows.filter(r=>r.docId===S.dDoc);
+  if(S.dBy&&S.dBy!=='all')rows=rows.filter(r=>(r.by||'(이름 없음)')===S.dBy);
+  const docs=[...new Set(all.map(r=>r.docId))];
+  const bys=[...new Set(all.map(r=>r.by||'(이름 없음)'))].sort();
+  const opt=(v,l,cur)=>`<option value="${esc(v)}" ${cur===v?'selected':''}>${esc(l)}</option>`;
+  app.innerHTML=`
+    <div class="donehead">
+      <div>
+        <h1 class="donetitle">완료 기록</h1>
+        <p class="donesub">체크한 항목이 완료일 순으로 쌓입니다. 팀 전체가 같은 기록을 봅니다.</p>
+      </div>
+      <button class="btn primary" id="xlsx">엑셀로 내보내기</button>
+    </div>
+    <div class="donefilt">
+      <select id="fRange">${opt('month','이번 달',S.dRange)}${opt('7d','최근 7일',S.dRange)}${opt('all','전체',S.dRange)}</select>
+      <select id="fDoc">${opt('all','문서 전체',S.dDoc)}${docs.map(id=>{const d=S.docs.find(x=>x.id===id);return d?opt(id,d.title,S.dDoc):'';}).join('')}</select>
+      <select id="fBy">${opt('all','담당자 전체',S.dBy)}${bys.map(b=>opt(b,b,S.dBy)).join('')}</select>
+      <span class="donecount">${rows.length}건</span>
+    </div>
+    ${rows.length?`<div class="dtwrap"><table class="dtable">
+      <thead><tr><th style="width:118px">완료일시</th><th style="width:150px">문서</th><th>완료한 일</th><th style="width:88px">담당자</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td class="dwhen">${esc(fmtWhen(r.at))}</td>
+        <td class="ddoc"><button data-open="${esc(r.docId)}">${esc(r.doc)}</button></td>
+        <td class="ditem">${r.heading?`<span class="dhead">${esc(r.heading)}</span>`:''}${esc(r.item)}</td>
+        <td class="dby">${esc(r.by||'—')}</td></tr>`).join('')}</tbody>
+    </table></div>`
+    :`<div class="empty"><strong>아직 완료한 항목이 없습니다</strong>문서를 열어 체크하면 여기에 기록이 쌓입니다.</div>`}`;
+  document.getElementById('fRange').onchange=e=>{S.dRange=e.target.value;render();};
+  document.getElementById('fDoc').onchange=e=>{S.dDoc=e.target.value;render();};
+  document.getElementById('fBy').onchange=e=>{S.dBy=e.target.value;render();};
+  app.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDoc(b.dataset.open));
+  document.getElementById('xlsx').onclick=()=>exportDone(rows);
+}
+function loadJS(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+async function exportDone(rows){
+  const btn=document.getElementById('xlsx');if(btn){btn.disabled=true;btn.textContent='만드는 중…';}
+  const head=['완료일시','문서','구분','완료한 일','담당자','주기'];
+  const body=rows.map(r=>[fmtWhen(r.at),r.doc,r.heading,r.item,r.by||'',r.period]);
+  const name='완료기록_'+new Date().toISOString().slice(0,10);
+  try{
+    if(!window.XLSX)await loadJS('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const ws=XLSX.utils.aoa_to_sheet([head,...body]);
+    ws['!cols']=[{wch:18},{wch:30},{wch:18},{wch:60},{wch:12},{wch:10}];
+    const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'완료기록');
+    XLSX.writeFile(wb,name+'.xlsx');
+  }catch(e){
+    const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    const csv='\ufeff'+[head,...body].map(r=>r.map(q).join(',')).join('\r\n');
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+    a.download=name+'.csv';a.click();URL.revokeObjectURL(a.href);
+  }
+  if(btn){btn.disabled=false;btn.textContent='엑셀로 내보내기';}
 }
 
 /* ── 편집기 ── */
@@ -1279,6 +1404,7 @@ document.getElementById('home').onclick=()=>{
   if(qEl){qEl.value='';}window.scrollTo(0,0);render();
 };
 document.getElementById('navCal').onclick=()=>{S.view='cal';S.cur=null;S.curEv=null;if(!S.selDate)S.selDate=todayStr();window.scrollTo(0,0);render();};
+document.getElementById('navDone').onclick=()=>{S.view='done';S.cur=null;S.curEv=null;window.scrollTo(0,0);render();};
 document.getElementById('whoami').onclick=()=>{
   const n=prompt('이름을 적어주세요. 문서를 누가 썼는지 표시됩니다.',S.me||'');
   if(n!=null){S.me=n.trim();lsSet('wiki_me',S.me);render();}
